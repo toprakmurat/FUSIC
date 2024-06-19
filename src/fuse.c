@@ -1,17 +1,5 @@
-#define FUSE_USE_VERSION 26
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <errno.h>
-#include <string.h>
-#include <fuse.h>
-#include <fcntl.h>
-#include <unistd.h>
-
 #include "fuse.h"
 
-// TODO: Implement remove function
 // TODO: Make all content permanent, content is lost when disk is unmounted
 
 struct file {
@@ -44,7 +32,34 @@ struct file* find_file(const char *name) {
     return NULL;
 }
 
-static int cats_getattr(const char *path, struct stat *buf) {
+int remove_file(const char* fname) {
+    struct file* current = head;
+    struct file* prev = NULL;
+
+    while (current) {
+        if (strcmp(current->name, fname) == 0) {
+            // Delete file
+            if (prev != NULL) {
+                prev->next = current->next;
+            } else {    // deleting the head node
+                head = current->next;
+            }
+
+            free(current->name);
+            free(current->content);
+            free(current);
+
+            return 0;
+        }
+
+        prev = current;
+        current = current->next;
+    }
+
+    return -ENOENT;
+}
+
+static int fusic_getattr(const char *path, struct stat *buf) {
     memset(buf, 0, sizeof(struct stat));
     if (strcmp(path, "/") == 0) {
         buf->st_mode = S_IFDIR | 0755;
@@ -63,7 +78,7 @@ static int cats_getattr(const char *path, struct stat *buf) {
     return 0;
 }
 
-static int cats_readdir(
+static int fusic_readdir(
     const char *path,
     void *buf,
     fuse_fill_dir_t filler,
@@ -85,7 +100,7 @@ static int cats_readdir(
     return 0;
 }
 
-static int cats_open(const char *path, struct fuse_file_info *fi) {
+static int fusic_open(const char *path, struct fuse_file_info *fi) {
     if (find_file(path + 1) == NULL) {
         log_message("File not found: %s", path + 1);
         return -ENOENT;
@@ -93,7 +108,7 @@ static int cats_open(const char *path, struct fuse_file_info *fi) {
     return 0;
 }
 
-static int cats_read(
+static int fusic_read(
     const char *path,
     char *buf,
     size_t count,
@@ -118,7 +133,7 @@ static int cats_read(
     return count;
 }
 
-static int cats_write(
+static int fusic_write(
     const char *path,
     const char *buf,
     size_t size,
@@ -144,7 +159,7 @@ static int cats_write(
     return size;
 }
 
-static int cats_create(const char *path, mode_t mode, 
+static int fusic_create(const char *path, mode_t mode, 
                         struct fuse_file_info *fi) {
     struct file *newFile = (struct file *)malloc(sizeof(struct file));
     if (newFile == NULL) {
@@ -171,8 +186,22 @@ static int cats_create(const char *path, mode_t mode,
     return 0;
 }
 
+static int fusic_unlink(const char* path) {
+    int res;
+    const char* fname = path + 1;
+
+    // remove_file function will look for whether file is existing or not
+    // no need to check it one more time
+
+    res = remove_file(fname);
+    if (remove_file != 0)
+        log_message("Could not delete the file");
+
+    return res;
+}
+
 // Needed when opening a file that is already created in write mode
-static int cats_truncate(const char *path, off_t size) {
+static int fusic_truncate(const char *path, off_t size) {
     int fd;
     
     fd = open(path + 1, O_WRONLY);
@@ -190,19 +219,19 @@ static int cats_truncate(const char *path, off_t size) {
 
     close(fd);
     return 0;
-
 }
 
-static struct fuse_operations cats_ops = {
-    .getattr = cats_getattr,
-    .readdir = cats_readdir,
-    .open = cats_open,
-    .read = cats_read,
-    .write = cats_write,
-    .create = cats_create,
-    .truncate = cats_truncate,
+static struct fuse_operations fusic_ops = {
+    .getattr = fusic_getattr,
+    .readdir = fusic_readdir,
+    .open = fusic_open,
+    .read = fusic_read,
+    .write = fusic_write,
+    .create = fusic_create,
+    .unlink = fusic_unlink,
+    .truncate = fusic_truncate,
 };
 
 int main(int argc, char *argv[]) {
-    return fuse_main(argc, argv, &cats_ops, NULL);
+    return fuse_main(argc, argv, &fusic_ops, NULL);
 }
