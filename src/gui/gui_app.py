@@ -6,6 +6,8 @@ import time
 # TODO: avoid hardcoding as much as possible
 
 # TODO: implement the bridge between the app and the GUI
+# TODO: organize the functions, some of them does not need to be inside the class
+# TODO: Write type annotations for the functions
 
 class FusicApp(ctk.CTk):
     def __init__(self):
@@ -84,36 +86,17 @@ class FusicApp(ctk.CTk):
             self.dir_entry.delete(0, ctk.END)
             self.dir_entry.insert(0, path)
 
+    # Helper function to close a window
     def close_progress_window(self, window):
         window.destroy()
 
-    def download_window(self):
-        self.withdraw()
-        dwn_window = ctk.CTkToplevel(self)
-        dwn_window.title("Downloading")
-        dwn_window.resizable(False, False)
-        dwn_window.geometry("600x400")
+    # Helper function to update a progress bar when needed
+    def update_prog_bar(self, progress_bar, total_dwn: int, dwn_num: int, dwn_time: float) -> None:
+        time.sleep(dwn_time)
+        progress_bar.set(dwn_num / total_dwn)  # setting forward
+        progress_bar.update()
 
-        dwn_window._set_appearance_mode("light")
-
-        progress_label = ctk.CTkLabel(dwn_window, text="Downloading...", corner_radius=8, font=("Ariel", 25, "bold"))
-        progress_label._set_appearance_mode("light")
-        progress_label.pack(pady=60)
-
-        progress_bar = ctk.CTkProgressBar(dwn_window, width=400, height=20, mode="determinate")
-        progress_bar._set_appearance_mode("light")
-        progress_bar.pack(pady=10)
-
-        progress_bar.set(0)
-
-        for i in range(201):
-            time.sleep(0.05)
-            progress_bar.set(i/200)
-            progress_bar.update()
-
-        progress_label.configure(text="Installed!")
-        dwn_window.after(1000, self.close_progress_window(dwn_window))
-
+    def cleanup_window(self):
         self.deiconify()
         self.artist_entry.delete(0, ctk.END)
         self.dir_entry.delete(0, ctk.END)
@@ -121,7 +104,41 @@ class FusicApp(ctk.CTk):
         self.error_label_directory.grid_forget()
         self.focus()
 
+    def progress_bar(self, dwn_window):
+        # Setting up the progress bar
+        progress_label = ctk.CTkLabel(dwn_window, text="Downloading...", corner_radius=8, font=("Ariel", 25, "bold"))
+        progress_label._set_appearance_mode("light")
+        progress_label.pack(pady=60)
+        progress_bar = ctk.CTkProgressBar(dwn_window, width=400, height=20, mode="determinate")
+        progress_bar._set_appearance_mode("light")
+        progress_bar.pack(pady=10)
+
+        progress_bar.set(0)
+
+        return progress_bar
+
+    def download_window(self, total_dwn):
+        # TODO: implement error checking for the parameters
+        title = "Downloading"
+        window_width = 600
+        window_height = 400
+        app_mode = 'light'
+
+        self.withdraw()
+        # Setting up the main download window
+        dwn_window = ctk.CTkToplevel(self)
+        dwn_window.title(f"{title}")
+        dwn_window.resizable(False, False)
+        dwn_window.geometry(f"{window_width}x{window_height}")
+        dwn_window._set_appearance_mode(f"{app_mode}")
+
+        return dwn_window
+
     def clicked(self):
+        # TODO: get the total number of tracks based on user's choice
+        total_tracks = 10  # temporarily, debugging purposes
+        duration = 0.25  # temporarily, debugging purposes
+
         if not self.artist_entry.get():
             self.error_label_artist.grid(column=0, row=6)
             return
@@ -132,7 +149,17 @@ class FusicApp(ctk.CTk):
 
         name_of_artist = self.artist_entry.get()
         path_of_directory = self.dir_entry.get()
-        self.download_window()
+
+        # Initialize Download window and progress bar
+        dwn_window = self.download_window(total_tracks)
+        progress_bar = self.progress_bar(dwn_window)
+        
+        # Updating progress bar
+        for i in range(total_tracks):
+            self.update_prog_bar(progress_bar, total_tracks, i, duration)
+
+        dwn_window.after(1000, self.close_progress_window(dwn_window))
+        self.cleanup_window()
 
 # Running the app
 # if __name__ == "__main__":
