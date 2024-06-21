@@ -1,5 +1,6 @@
-import customtkinter as ctk
 from tkinter import filedialog
+
+import customtkinter as ctk
 import time
 
 # TODO: organizing the variables and their names
@@ -12,23 +13,65 @@ import time
 class FusicApp(ctk.CTk):
     def __init__(self):
         super().__init__()
-        
+
+        # Attributes for main window
+        self.mw_title = "FUSIC"    # default
+        self.mw_app_mode = "dark"  # default
+        self.mw_window_width  = 0
+        self.mw_window_height = 0
+
+        # Private Attributes
+        self._artist       = ""
+        self._install_path = ""
+        self._total_tracks = 0
+
         # Creating the main window of the FUSIC app
-        self.initialize_window()
+        self.initialize_window(750, 600)
         self.create_widgets()
         self.layout_widgets()
-        
-    def initialize_window(self):
-        # TODO: implement error checking for the parameters
-        title = "FUSIC"
-        window_width = 750
-        window_height = 600
-        app_mode = 'dark'
 
-        self.title(f"{title}")
-        self.geometry(f"{window_width}x{window_height}")
+    @property
+    def total_tracks(self):
+        return self._total_tracks
+    
+    @total_tracks.setter
+    def total_tracks(self, value):
+        if total_tracks < 0:
+            raise ValueError("Tracks could not be less than 0")
+        self._total_tracks = value
+
+    @property
+    def install_path(self):
+        return self._install_path
+    
+    @install_path.setter
+    def install_path(self, value):
+        if not isinstance(value, str):
+            raise ValueError("Invalid Install Path: Installation path must be a 'str'")
+        self._install_path = value
+
+    @property
+    def artist(self):
+        return self._artist
+
+    @artist.setter
+    def artist(self, value):
+        # TODO: Check if artist name available or not
+        if not isinstance(value, str):
+            raise ValueError("Invalid Artist Name: artist name must be a 'str'")
+        self._artist = value
+    
+    def initialize_window(self, width, height):
+        if width < 0 or height < 0:
+            raise ValueError("Invalid values for the arguments width and/or height")
+
+        self.mw_window_width  = width
+        self.mw_window_height = height
+
+        self.title(f"{self.mw_title}")
+        self.geometry(f"{self.mw_window_width}x{self.mw_window_height}")
         self.resizable(False, False)
-        ctk.set_appearance_mode(f"{app_mode}")
+        ctk.set_appearance_mode(f"{self.mw_app_mode}")
 
     def create_widgets(self):
         # TODO: classifying messages
@@ -76,12 +119,9 @@ class FusicApp(ctk.CTk):
         self.dir_entry.grid(column=0, row=4)
         self.button.grid(column=0, row=5, pady=(15, 0))
 
-    def get_folder_path(self):
-        folder_path = filedialog.askdirectory(initialdir="/", title="Select a directory")
-        return folder_path
-
     def select_and_display_path(self, event):
-        path = self.get_folder_path()
+        # Get installation path and check if it exists
+        path = filedialog.askdirectory(initialdir='/', title="Select a directory")
         if path:
             self.dir_entry.delete(0, ctk.END)
             self.dir_entry.insert(0, path)
@@ -150,6 +190,9 @@ class FusicApp(ctk.CTk):
         name_of_artist = self.artist_entry.get()
         path_of_directory = self.dir_entry.get()
 
+        self._install_path = path_of_directory
+        self._artist = name_of_artist
+
         # Initialize Download window and progress bar
         dwn_window = self.download_window(total_tracks)
         progress_bar = self.progress_bar(dwn_window)
@@ -162,6 +205,6 @@ class FusicApp(ctk.CTk):
         self.cleanup_window()
 
 # Running the app
-# if __name__ == "__main__":
-#     app = FusicApp()
-#     app.mainloop()
+if __name__ == "__main__":
+    app = FusicApp()
+    app.mainloop()
