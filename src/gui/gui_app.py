@@ -10,6 +10,7 @@ import time
 # TODO: Write type annotations for the functions
 
 class FusicApp(ctk.CTk):
+    __total_tracks = 10
     def __init__(self):
         super().__init__()
         
@@ -135,6 +136,7 @@ class FusicApp(ctk.CTk):
         return dwn_window
     
     def __is_empty(self):
+        #Controlling whether entries are empty or not
         empty = False
         if not self.__artist_entry.get():
             self.__error_label_artist.grid(column=0, row=6,sticky= "s",pady= (0,5))
@@ -155,7 +157,7 @@ class FusicApp(ctk.CTk):
 
     def __clicked(self):
         # TODO: get the total number of tracks based on user's choice
-        self.__total_tracks = 10  # temporarily, debugging purposes
+        # self.__total_tracks = 10  # temporarily, debugging purposes
         duration = 0.25  # temporarily, debugging purposes
 
         if self.__is_empty():
@@ -175,13 +177,18 @@ class FusicApp(ctk.CTk):
         dwn_window.after(1000, self.__close_progress_window(dwn_window))
         self.__cleanup_window()
 
-        def get_name_of_artist(self):
+        @property
+        def name_of_artist(self):
             return self.__name_of_artist
         
-        def get_path_of_directory(self):
+        @property
+        def path_of_directory(self):
             return self.__path_of_directory
 
-        def set_total_tracks(self,total_tracks):
+        @total_tracks.setter
+        def total_tracks(self,total_tracks):
+            if total_tracks <= 0:
+                raise ValueError("Total tracks must be a positive integer")
             self.__total_tracks = total_tracks
 
         
