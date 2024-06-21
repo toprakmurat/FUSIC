@@ -1,5 +1,6 @@
-import customtkinter as ctk
 from tkinter import filedialog
+
+import customtkinter as ctk
 import time
 
 # TODO: organizing the variables and their names
@@ -10,28 +11,69 @@ import time
 # TODO: Write type annotations for the functions
 
 class FusicApp(ctk.CTk):
-    __total_tracks = 10
     def __init__(self):
         super().__init__()
-        
+
+        # Attributes for main window
+        self.mw_title = "FUSIC"    # default
+        self.mw_app_mode = "dark"  # default
+        self.mw_window_width  = 0
+        self.mw_window_height = 0
+
+        # Private Attributes
+        self._artist       = ""
+        self._install_path = ""
+        self._total_tracks = 0
+
         # Creating the main window of the FUSIC app
-        self.__initialize_window()
-        self.__create_widgets()
-        self.__layout_widgets()
-        
-    def __initialize_window(self):
-        # TODO: implement error checking for the parameters
-        title = "FUSIC"
-        window_width = 750
-        window_height = 600
-        app_mode = 'dark'
+        self.initialize_window(750, 600)
+        self.create_widgets()
+        self.layout_widgets()
 
-        self.title(f"{title}")
-        self.geometry(f"{window_width}x{window_height}")
+    @property
+    def total_tracks(self):
+        return self._total_tracks
+    
+    @total_tracks.setter
+    def total_tracks(self, value):
+        if total_tracks < 0:
+            raise ValueError("Tracks could not be less than 0")
+        self._total_tracks = value
+
+    @property
+    def install_path(self):
+        return self._install_path
+    
+    @install_path.setter
+    def install_path(self, value):
+        if not isinstance(value, str):
+            raise ValueError("Invalid Install Path: Installation path must be a 'str'")
+        self._install_path = value
+
+    @property
+    def artist(self):
+        return self._artist
+
+    @artist.setter
+    def artist(self, value):
+        # TODO: Check if artist name available or not
+        if not isinstance(value, str):
+            raise ValueError("Invalid Artist Name: artist name must be a 'str'")
+        self._artist = value
+    
+    def initialize_window(self, width, height):
+        if width < 0 or height < 0:
+            raise ValueError("Invalid values for the arguments width and/or height")
+
+        self.mw_window_width  = width
+        self.mw_window_height = height
+
+        self.title(f"{self.mw_title}")
+        self.geometry(f"{self.mw_window_width}x{self.mw_window_height}")
         self.resizable(False, False)
-        ctk.set_appearance_mode(f"{app_mode}")
+        ctk.set_appearance_mode(f"{self.mw_app_mode}")
 
-    def __create_widgets(self):
+    def create_widgets(self):
         # TODO: classifying messages
         # TODO: making variables more organized
 
@@ -41,71 +83,68 @@ class FusicApp(ctk.CTk):
         artist_ent_txt = "Enter an artist name: "
         dir_ent_txt    = "Directory to save lyrics: "
 
-        # Crating the main frame
-        self.__main_window = ctk.CTkFrame(self, fg_color=("gray15", "gray25"), corner_radius=8)
+        # Crating the main window
+        self.main_window = ctk.CTkFrame(self, fg_color=("gray15", "gray25"), corner_radius=8)
 
         # Labels
-        self.__error_label_artist    = ctk.CTkLabel(self.__main_window, text=artist_err_txt, text_color="red")
-        self.__error_label_directory = ctk.CTkLabel(self.__main_window, text=dir_err_txt, text_color="red")
-        self.__label1 = ctk.CTkLabel(self.__main_window, text="Music Downloader", corner_radius=10,
+        self.error_label_artist    = ctk.CTkLabel(self.main_window, text=artist_err_txt, text_color="red")
+        self.error_label_directory = ctk.CTkLabel(self.main_window, text=dir_err_txt, text_color="red")
+        self.label1 = ctk.CTkLabel(self.main_window, text="Music Downloader", corner_radius=10,
                                     font=("Calibri", 35, "bold"), text_color="white")
-        self.__label2 = ctk.CTkLabel(self.__main_window, text="Artist:", corner_radius=10, 
+        self.label2 = ctk.CTkLabel(self.main_window, text="Artist:", corner_radius=10, 
                                     font=("Calibri", 20, "bold"), text_color="white")
-        self.__label3 = ctk.CTkLabel(self.__main_window, text="Directory:", corner_radius=10, 
+        self.label3 = ctk.CTkLabel(self.main_window, text="Directory:", corner_radius=10, 
                                     font=("Calibri", 20, "bold"), text_color="white")
 
         # Entries
-        self.__artist_entry = ctk.CTkEntry(self.__main_window, 
+        self.artist_entry = ctk.CTkEntry(self.main_window, 
                         placeholder_text=artist_ent_txt, width=410, height=40)
-        self.__dir_entry = ctk.CTkEntry(self.__main_window, 
+        self.dir_entry = ctk.CTkEntry(self.main_window, 
                         placeholder_text=dir_ent_txt, width=410, height=40)
-        self.__dir_entry.bind("<ButtonRelease>", self.__select_and_display_path)
-        self.__button = ctk.CTkButton(self.__main_window, text="Download", fg_color="darkgray", 
-                    text_color="Black", command=self.__clicked, width=160, height=40, font=("Ariel", 18))
+        self.dir_entry.bind("<ButtonRelease>", self.select_and_display_path)
+        self.button = ctk.CTkButton(self.main_window, text="Download", fg_color="darkgray", 
+                    text_color="Black", command=self.clicked, width=160, height=40, font=("Ariel", 18))
 
-    def __layout_widgets(self):
-        self.__main_window.pack(pady=40, padx=80, fill="both", expand=True)
-        self.__main_window.grid_columnconfigure(0, weight=1)
+    def layout_widgets(self):
+        self.main_window.pack(pady=40, padx=80, fill="both", expand=True)
+        self.main_window.grid_columnconfigure(0, weight=1)
 
         for i in range(7):
-            self.__main_window.grid_rowconfigure(i, weight=1)
+            self.main_window.grid_rowconfigure(i, weight=1)
         
-        self.__label1.grid(row=0, column=0)
-        self.__label2.grid(row=1, column=0, sticky="ws", padx=83)
-        self.__label3.grid(row=3, column=0, sticky="ws", padx=83)
-        self.__artist_entry.grid(column=0, row=2, pady=(0, 10))
-        self.__dir_entry.grid(column=0, row=4)
-        self.__button.grid(column=0, row=5, pady=(15, 0))
+        self.label1.grid(row=0, column=0)
+        self.label2.grid(row=1, column=0, sticky="ws", padx=83)
+        self.label3.grid(row=3, column=0, sticky="ws", padx=83)
+        self.artist_entry.grid(column=0, row=2, pady=(0, 10))
+        self.dir_entry.grid(column=0, row=4)
+        self.button.grid(column=0, row=5, pady=(15, 0))
 
-    def __get_folder_path(self):
-        folder_path = filedialog.askdirectory(initialdir="/", title="Select a directory")
-        return folder_path
-
-    def __select_and_display_path(self, event):
-        path = self.__get_folder_path()
+    def select_and_display_path(self, event):
+        # Get installation path and check if it exists
+        path = filedialog.askdirectory(initialdir='/', title="Select a directory")
         if path:
-            self.__dir_entry.delete(0, ctk.END)
-            self.__dir_entry.insert(0, path)
+            self.dir_entry.delete(0, ctk.END)
+            self.dir_entry.insert(0, path)
 
     # Helper function to close a window
-    def __close_progress_window(self, window):
+    def close_progress_window(self, window):
         window.destroy()
 
     # Helper function to update a progress bar when needed
-    def __update_prog_bar(self, progress_bar, total_dwn: int, dwn_num: int, dwn_time: float) -> None:
+    def update_prog_bar(self, progress_bar, total_dwn: int, dwn_num: int, dwn_time: float) -> None:
         time.sleep(dwn_time)
         progress_bar.set(dwn_num / total_dwn)  # setting forward
         progress_bar.update()
 
-    def __cleanup_window(self):
+    def cleanup_window(self):
         self.deiconify()
-        self.__artist_entry.delete(0, ctk.END)
-        self.__dir_entry.delete(0, ctk.END)
-        self.__error_label_artist.grid_forget()
-        self.__error_label_directory.grid_forget()
+        self.artist_entry.delete(0, ctk.END)
+        self.dir_entry.delete(0, ctk.END)
+        self.error_label_artist.grid_forget()
+        self.error_label_directory.grid_forget()
         self.focus()
 
-    def __progress_bar(self, dwn_window):
+    def progress_bar(self, dwn_window):
         # Setting up the progress bar
         progress_label = ctk.CTkLabel(dwn_window, text="Downloading...", corner_radius=8, font=("Ariel", 25, "bold"))
         progress_label._set_appearance_mode("light")
@@ -118,7 +157,7 @@ class FusicApp(ctk.CTk):
 
         return progress_bar
 
-    def __download_window(self, total_dwn):
+    def download_window(self, total_dwn):
         # TODO: implement error checking for the parameters
         title = "Downloading"
         window_width = 600
@@ -134,66 +173,38 @@ class FusicApp(ctk.CTk):
         dwn_window._set_appearance_mode(f"{app_mode}")
 
         return dwn_window
-    
-    def __is_empty(self):
-        #Controlling whether entries are empty or not
-        empty = False
-        if not self.__artist_entry.get():
-            self.__error_label_artist.grid(column=0, row=6,sticky= "s",pady= (0,5))
-            empty = True
-        else:
-            self.__error_label_artist.grid_forget()
-            
 
-        if not self.__dir_entry.get():
-            self.__error_label_directory.grid(column=0, row=7,sticky = "n",pady=(0,5))
-            empty = True
-        else:
-            self.__error_label_directory.grid_forget()
-            
-
-        return empty
-
-
-    def __clicked(self):
+    def clicked(self):
         # TODO: get the total number of tracks based on user's choice
-        # self.__total_tracks = 10  # temporarily, debugging purposes
+        total_tracks = 10  # temporarily, debugging purposes
         duration = 0.25  # temporarily, debugging purposes
 
-        if self.__is_empty():
+        if not self.artist_entry.get():
+            self.error_label_artist.grid(column=0, row=6)
             return
 
-        self.__name_of_artist = self.__artist_entry.get()
-        self.__path_of_directory = self.__dir_entry.get()
+        if not self.dir_entry.get():
+            self.error_label_directory.grid(column=0, row=6)
+            return
+
+        name_of_artist = self.artist_entry.get()
+        path_of_directory = self.dir_entry.get()
+
+        self._install_path = path_of_directory
+        self._artist = name_of_artist
 
         # Initialize Download window and progress bar
-        dwn_window = self.__download_window(self.__total_tracks)
-        progress_bar = self.__progress_bar(dwn_window)
+        dwn_window = self.download_window(total_tracks)
+        progress_bar = self.progress_bar(dwn_window)
         
         # Updating progress bar
-        for i in range(self.__total_tracks):
-            self.__update_prog_bar(progress_bar, self.__total_tracks, i,duration)
+        for i in range(total_tracks):
+            self.update_prog_bar(progress_bar, total_tracks, i, duration)
 
-        dwn_window.after(1000, self.__close_progress_window(dwn_window))
-        self.__cleanup_window()
-
-        @property
-        def name_of_artist(self):
-            return self.__name_of_artist
-        
-        @property
-        def path_of_directory(self):
-            return self.__path_of_directory
-
-        @total_tracks.setter
-        def total_tracks(self,total_tracks):
-            if total_tracks <= 0:
-                raise ValueError("Total tracks must be a positive integer")
-            self.__total_tracks = total_tracks
-
-        
+        dwn_window.after(1000, self.close_progress_window(dwn_window))
+        self.cleanup_window()
 
 # Running the app
-# if __name__ == "__main__":
-#     app = FusicApp()
-#     app.mainloop()
+if __name__ == "__main__":
+    app = FusicApp()
+    app.mainloop()
