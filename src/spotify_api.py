@@ -3,7 +3,7 @@ import requests
 # TODO: error handling for requests
 
 class SpotifyAPI:
-    def __init__(self, client_id, client_secret):
+    def __init__(self, client_id: str, client_secret: str):
         self.client_id = client_id
         self.client_secret = client_secret
         self.base_url = 'https://api.spotify.com/v1'
@@ -20,7 +20,7 @@ class SpotifyAPI:
         auth_response_data = auth_response.json()
         return auth_response_data['access_token']
 
-    def get_artist_id(self, artist_name):
+    def get_artist_id(self, artist_name: str):
         url = f'{self.base_url}/search'
         headers = {
             'Authorization': f'Bearer {self.access_token}'
@@ -37,7 +37,7 @@ class SpotifyAPI:
             return artists[0]['id']
         return None
 
-    def get_all_tracks(self, artist_name):
+    def get_all_tracks(self, artist_name: str) -> list:
         artist_id = self.get_artist_id(artist_name)
         if not artist_id:
             raise Exception(f"Artist '{artist_name}' not found.")

@@ -1,6 +1,6 @@
 import requests
 
-def get_lyrics(artist_name, track_name):
+def get_lyrics(artist_name: str, track_name: str) -> str:
     base_url = f'https://api.lyrics.ovh/v1/{artist_name}/{track_name}'
     response = requests.get(base_url)
     if response.status_code == 200:
@@ -8,7 +8,7 @@ def get_lyrics(artist_name, track_name):
         return data.get('lyrics', 'Lyrics not found.')
     return 'Lyrics not found.'
 
-def get_all_lyrics_for_artist(artist_name, tracks):
+def get_all_lyrics_for_artist(artist_name: str, tracks: list) -> dict:
     all_lyrics = {}
     for track in tracks:
         lyrics = get_lyrics(artist_name, track)

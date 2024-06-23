@@ -1,6 +1,7 @@
 #include "fuse.h"
 
 // TODO: Make all content permanent, content is lost when disk is unmounted
+// TODO: Automatically mount the installation folder
 
 struct file {
     char *name;
