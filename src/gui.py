@@ -1,12 +1,13 @@
 from lyrics_ovh import get_all_lyrics_for_artist 
 from spotify_api import SpotifyAPI
 
-from PIL import Image, ImageTk
 
 from tkinter import filedialog, messagebox
+from PIL import Image, ImageTk
 import customtkinter as ctk
 import tkinter as tk
 
+from typing import Callable, Any
 import platform
 import os
 import re
@@ -50,13 +51,15 @@ def sanitize_filename(filename: str) -> str:
     return sanitized_filename
 
 # Helper function to create files from tracks of an artist
-def create_files(spotify_api: SpotifyAPI, directory: str, artist_name: str, progress_callback) -> bool:
+def create_files(spotify_api: SpotifyAPI, directory: str, artist_name: str, 
+    progress_callback: Callable[[Any, int], None]) -> bool:
+    
     try:
         tracks = spotify_api.get_all_tracks(artist_name)
         total_tracks = len(tracks)
         for index, track in enumerate(tracks):
             # Update progress
-            progress_callback(index / total_tracks * 100)
+            progress_callback((index + 1) / total_tracks)
             lyrics_dict = get_all_lyrics_for_artist(artist_name, [track])
             for track_name, lyrics in lyrics_dict.items():
                 new_track_name = sanitize_filename(track_name)
@@ -116,8 +119,13 @@ class FusicApp(ctk.CTk):
         self.grid_rowconfigure(1, weight=0)
         self.create_widgets()
 
-    def create_label(self, master, text, fg_color=None, text_color=None, font=("Ariel",15,"bold"), height=40, width=140, corner_radius=None, image=None, padx=(0,0), pady=(0,0), fill=None, expand=None,anchor=tk.W):
-        label = ctk.CTkLabel(master, text=text, fg_color=fg_color, text_color=text_color, font=font, height=height, width=width, corner_radius=corner_radius, image=image)
+    def create_label(self, master, text, fg_color=None, text_color=None, 
+        font=("Ariel",15,"bold"), height=40, width=140, corner_radius=None, 
+        image=None, padx=(0,0), pady=(0,0), fill=None, expand=None,anchor=tk.W
+        ):
+
+        label = ctk.CTkLabel(master, text=text, fg_color=fg_color, text_color=text_color, 
+            font=font, height=height, width=width, corner_radius=corner_radius, image=image)
         label.pack(pady=pady, padx=padx, fill=fill, expand=expand, anchor=anchor)
         return label
 
@@ -127,36 +135,44 @@ class FusicApp(ctk.CTk):
         return entry
 
     def create_widgets(self):
-        #image
-        image = Image.open("image.png")
+        # Image
+        image = Image.open("../assets/fusic.png")
         image = image.resize((400, 400))
         
-        #first frame
+        # First frame
         self.frame_1 = ctk.CTkFrame(self, fg_color="transparent")
         self.frame_1.grid(row=0, column=0, padx=(0,10), pady=(0, 0), sticky="nsw", rowspan=2)
 
-        #label that holds the image
+        # Label to hold the image
         ctk_image = ctk.CTkImage(light_image=image,size=(400,400))
-        self.image_label = self.create_label(self.frame_1, "", width=400, height=400, image=ctk_image, fill=tk.BOTH, expand=True)
+        self.image_label = self.create_label(self.frame_1, "", width=400, height=400, 
+            image=ctk_image, fill=tk.BOTH, expand=True)
         
-        #second frame
+        # Second frame
         self.frame_2 = ctk.CTkFrame(self, fg_color="gray", corner_radius=20)
         self.frame_2.grid(row=0, column=1, padx=(0,15), pady=(10, 0), sticky="nsew")
 
-        #download button
-        self.button = ctk.CTkButton(self, fg_color="lightgray", text="Download", text_color="black", command=self.download)
+        # Download button
+        self.button = ctk.CTkButton(self, fg_color="lightgray", 
+            text="Download", text_color="black", command=self.download)
         self.button.grid(row=1, column=1, padx=(0,15), pady=10, sticky="ew")
 
-        #title
-        self.title_label = self.create_label(self.frame_2, "FUSIC", fg_color="lightgray", text_color="black", font=("Arial", 25, "bold"), height=40, width=300, corner_radius=25, pady=(20, 50),anchor=tk.CENTER)
+        # Title
+        self.title_label = self.create_label(self.frame_2, "FUSIC", fg_color="lightgray", 
+            text_color="black", font=("Arial", 25, "bold"), height=40, width=300, 
+            corner_radius=25, pady=(20, 50),anchor=tk.CENTER)
 
         # Artist label and entry
-        self.artist_label = self.create_label(self.frame_2, "Artist", fg_color="lightgray", text_color="black", corner_radius=100,padx=(15,0))
-        self.artist_entry = self.create_entry(self.frame_2, "Enter an artist name:", pady=(10, 10),padx=(15,15))
+        self.artist_label = self.create_label(self.frame_2, "Artist", fg_color="lightgray", 
+            text_color="black", corner_radius=100,padx=(15,0))
+        self.artist_entry = self.create_entry(self.frame_2, "Enter an artist name:", 
+            pady=(10, 10),padx=(15,15))
 
         # Directory label and entry
-        self.directory_label = self.create_label(self.frame_2, "Directory", fg_color="lightgray", text_color="black", corner_radius=100,padx=(15,0))
-        self.directory_entry = self.create_entry(self.frame_2, "Directory to save lyrics:", pady=(10, 10),padx=(15,15))
+        self.directory_label = self.create_label(self.frame_2, "Directory", fg_color="lightgray", 
+            text_color="black", corner_radius=100,padx=(15,0))
+        self.directory_entry = self.create_entry(self.frame_2, "Directory to save lyrics:", 
+            pady=(10, 10),padx=(15,15))
     
         self.directory_entry.bind("<ButtonRelease>", self.select_and_display_path)
         
@@ -179,7 +195,11 @@ class FusicApp(ctk.CTk):
     def download(self):
         artist_name = self.artist_entry.get()
         directory = self.directory_entry.get()
-        
+
+        res = create_dir(directory)
+        if not res:
+            messagebox.showerror("Error", f"Failed to create directory {directory}")
+
         # Open progress window
         self.progress_window = ProgressWindow(self)
         
@@ -188,11 +208,11 @@ class FusicApp(ctk.CTk):
         self.progress_window.update_idletasks()
 
         spotify_api = SpotifyAPI(spotify_client_id, spotify_client_secret)
-        success = create_files(spotify_api, directory, artist_name, self.progress_window.update_progress)
+        result = create_files(spotify_api, directory, artist_name, self.progress_window.update_progress)
         
         self.progress_window.destroy()
         self.cleanup_window()
-        if success:
+        if result:
             messagebox.showinfo("Success", "Lyrics downloaded successfully.")
         else:
             messagebox.showerror("Error", "Failed to download lyrics.")
