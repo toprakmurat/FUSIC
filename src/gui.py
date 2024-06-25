@@ -202,21 +202,19 @@ class FusicApp(ctk.CTk):
 
         # Open progress window
         self.progress_window = ProgressWindow(self)
-        
-        # Start download process
-        self.progress_window.progress_bar.set(0)
-        self.progress_window.update_idletasks()
+        self.after(100, self.start_download, artist_name, directory)
 
+        # Start download process
+    def start_download(self, artist_name, directory):
         spotify_api = SpotifyAPI(spotify_client_id, spotify_client_secret)
-        result = create_files(spotify_api, directory, artist_name, self.progress_window.update_progress)
+        success = create_files(spotify_api, directory, artist_name, self.progress_window.update_progress)
         
         self.progress_window.destroy()
         self.cleanup_window()
-        if result:
+        if success:
             messagebox.showinfo("Success", "Lyrics downloaded successfully.")
         else:
             messagebox.showerror("Error", "Failed to download lyrics.")
-
 if __name__ == "__main__":
     app = FusicApp()
     app.mainloop()
