@@ -18,8 +18,8 @@ import messages
 PLATFORMS = ["Windows", "Linux", "Darwin"]
 
 # Credentials
-spotify_client_id = ''
-spotify_client_secret = ''
+SPOTIFY_CLIENT_ID = ''
+SPOTIFY_CLIENT_SECRET = ''
 
 # Helper function to replace invalid filenames with the new ones
 def sanitize_filename(filename: str) -> str:
@@ -62,6 +62,8 @@ def create_files(spotify_api: SpotifyAPI, directory: str, artist_name: str,
             progress_callback((index + 1) / total_tracks)
             lyrics_dict = get_all_lyrics_for_artist(artist_name, [track])
             for track_name, lyrics in lyrics_dict.items():
+                if lyrics == "Lyrics not found.":
+                    continue
                 new_track_name = sanitize_filename(track_name)
                 fpath = os.path.join(directory, f'{new_track_name}.txt') 
                 with open(fpath, "w", encoding="utf-8") as file:
@@ -101,7 +103,7 @@ class ProgressWindow(ctk.CTkToplevel):
         self.progress_bar.set(0)
 
 
-    def update_progress(self, value):
+    def update_progress(self, value: float) -> None:
         self.progress_bar.set(value)
         self.update_idletasks()
 
@@ -205,8 +207,8 @@ class FusicApp(ctk.CTk):
         self.after(100, self.start_download, artist_name, directory)
 
         # Start download process
-    def start_download(self, artist_name, directory):
-        spotify_api = SpotifyAPI(spotify_client_id, spotify_client_secret)
+    def start_download(self, artist_name: str, directory: str) -> None:
+        spotify_api = SpotifyAPI(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET)
         success = create_files(spotify_api, directory, artist_name, self.progress_window.update_progress)
         
         self.progress_window.destroy()
@@ -215,6 +217,3 @@ class FusicApp(ctk.CTk):
             messagebox.showinfo("Success", "Lyrics downloaded successfully.")
         else:
             messagebox.showerror("Error", "Failed to download lyrics.")
-if __name__ == "__main__":
-    app = FusicApp()
-    app.mainloop()
